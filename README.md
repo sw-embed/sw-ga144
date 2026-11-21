@@ -15,6 +15,9 @@ calculations and programs that send results across the chip.
 
 ![GA144 Studio running Double and forward, with 84 in node 002's T register](images/screenshot.png)
 
+This demo is conceptual and based on public documentation. It has not
+been validated against actual GreenArrays hardware or software.
+
 ## Build
 
 Install a Rust toolchain with Edition 2024 support and build an

@@ -217,6 +217,7 @@ fn app() -> Html {
                     <li>{"For your own program, run "}<code>{"./assemble program.f18"}</code>{", choose a node, and paste the listing under Load an assembler listing. Use entry address 0 for a program that starts at RAM address 0."}</li>
                 </ol>
                 <p>{"The inspector displays results directly. You can also send values between simulated nodes."}</p>
+                <p>{"This demo is conceptual and based on public documentation. It has not been validated against actual GreenArrays hardware or software."}</p>
             </section>
             <section class="panel">
                 <div class="panel-title">
