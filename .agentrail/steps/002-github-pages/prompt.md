@@ -1,0 +1,1 @@
+Set up a GitHub Actions workflow to build the standalone Yew demo and publish it to GitHub Pages. Verify the project-site asset prefix and link the demo from the README.

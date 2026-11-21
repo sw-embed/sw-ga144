@@ -1,0 +1,77 @@
+name: Publish GA144 Studio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Check out sw-ga144
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Check out the X_eTaL assembler runtime
+        uses: actions/checkout@v4
+        with:
+          repository: softwarewrighter/X_eTaL
+          ref: 0166a52a5472ec652dbad57f4002fe4f59a9f95d
+          path: .deps/xetal
+          persist-credentials: false
+
+      - name: Install WebAssembly target and Trunk
+        run: |
+          rustup target add wasm32-unknown-unknown
+          archive="$RUNNER_TEMP/trunk.tar.gz"
+          curl --fail --silent --show-error --location --output "$archive" \
+            https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz
+          printf '%s  %s\n' f2b4680cd239693a646a2795e4633c625328d7b2a044fbe749fa3a2fe9e7036b "$archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" trunk
+          printf '%s\n' "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Build X_eTaL
+        working-directory: .deps/xetal/components/cli
+        run: |
+          cargo build --locked -p xetal-cli --target-dir "$RUNNER_TEMP/xetal-target"
+          printf 'XETAL_BIN=%s\n' "$RUNNER_TEMP/xetal-target/debug/xetal" >> "$GITHUB_ENV"
+
+      - name: Verify the assembler and emulator
+        run: tests/gate.sh
+
+      - name: Build static site
+        working-directory: web
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: trunk build --release --locked --public-url "${PAGES_BASE_PATH%/}/"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      pages: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: publish
+        uses: actions/deploy-pages@v4

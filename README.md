@@ -5,6 +5,8 @@ chip. The assembler is written in X_eTaL, the emulator in Rust, and the
 browser UI in Yew/WebAssembly. The browser demo includes single-node
 calculations and programs that send results across the chip.
 
+[Open the live GA144 Studio demo](https://sw-embed.github.io/sw-ga144/)
+
 ## Build
 
 Install a Rust toolchain with Edition 2024 support and build an
@@ -32,6 +34,15 @@ Trunk assembles the bundled programs at build time and writes the
 static site to `web/dist/`. Serve that directory with any static HTTP
 server, or start the Trunk development server using the instructions
 below.
+
+### GitHub Pages
+
+In the repository's **Settings > Pages**, set **Source** under **Build
+and deployment** to **GitHub Actions**. Then open the **Publish GA144
+Studio** workflow in **Actions** and click **Run workflow** on `main`.
+Later pushes to `main` publish automatically. The
+[Pages workflow](.github/workflows/pages.yml) builds the demo for the
+repository's Pages path and publishes `web/dist/`.
 
 ## Run a program
 
