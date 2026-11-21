@@ -1,0 +1,1 @@
+Fixed the Double 21 entry point to hold T=42 while the chip keeps ticking. Ordinary F18A 18-bit wraparound is preserved.
