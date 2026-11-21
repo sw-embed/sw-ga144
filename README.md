@@ -62,7 +62,8 @@ repository's Pages path and publishes `web/dist/`.
 ```
 
 This starts node 000 at RAM address 1, advances eight scheduler ticks,
-and reports `T=42`. Each listing line contains a decimal RAM address
+and reports `T=42`. The program then loops in place, holding that result
+as the chip continues to tick. Each listing line contains a decimal RAM address
 and an unsigned decimal 18-bit word. The simulator initializes omitted
 locations to `x15555`.
 

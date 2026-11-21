@@ -212,7 +212,7 @@ fn app() -> Html {
                 <h2 id="help-heading">{"How to use GA144 Studio"}</h2>
                 <ol>
                     <li>{"Pick a demo. Studio loads its programs and selects the node where the answer will appear."}</li>
-                    <li>{"Click Run demo to advance the chip, or Step to advance one tick. Click any square to inspect that node."}</li>
+                    <li>{"Click Run demo to advance the chip, or Step to advance one tick. Reset reloads the selected demo. Click any square to inspect that node."}</li>
                     <li>{"Look at T for the demo result. T is the top of the node’s data stack. The inspector also shows its source, RAM, and other registers."}</li>
                     <li>{"For your own program, run "}<code>{"./assemble program.f18"}</code>{", choose a node, and paste the listing under Load an assembler listing. Use entry address 0 for a program that starts at RAM address 0."}</li>
                 </ol>

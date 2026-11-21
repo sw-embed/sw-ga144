@@ -27,7 +27,7 @@ macro_rules! example {
 pub(crate) const SINGLE_NODE: &[Demo] = &[
     Demo {
         title: "Double 21",
-        description: "Node 000 duplicates 21 and adds the two copies. Look for 42 in T.",
+        description: "Node 000 doubles 21, then loops in place with 42 in T. Reset to run it from the start.",
         result_node: 0,
         ticks: 8,
         programs: &[example!(0, 1, "double")],

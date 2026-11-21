@@ -78,7 +78,15 @@ simulate() {
 
 "$root/assemble" "$root/examples/double.f18" > "$scratch/double.img"
 actual="$(simulate 8 "000:1:$scratch/double.img")"
-[[ $actual == '000 P=x000 slot=4 T=42 S=0 R=0 wait=-' ]]
+[[ $actual == '000 P=x003 slot=4 T=42 S=0 R=0 wait=-' ]]
+# Further clicks keep the chip ticking. The finished program holds 42.
+actual="$(simulate 800 "000:1:$scratch/double.img")"
+[[ $actual == '000 P=x003 slot=4 T=42 S=0 R=0 wait=-' ]]
+
+printf '%s\n' '262143 1 . + : done done ;' > "$input"
+"$root/assemble" "$input" > "$scratch/wrap.img"
+actual="$(simulate 24 "000:0:$scratch/wrap.img")"
+[[ $actual == *' T=0 '* ]]
 
 "$root/assemble" "$root/examples/send.f18" > "$scratch/send.img"
 "$root/assemble" "$root/examples/receive.f18" > "$scratch/receive.img"

@@ -1,4 +1,4 @@
-number = 4
+number = 5
 slug = "chip-pair"
 status = "pending"
 description = "Model an explicitly wired pair of GA144 chips and validate transfer through a..."

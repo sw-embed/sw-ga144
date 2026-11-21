@@ -1,4 +1,5 @@
-( Two words with a tail call. )
+( Double 21, then hold the result in T. )
 # 0 org
 : double dup . + ;
-: example 21 double ;
+: example 21 double
+: done done ;

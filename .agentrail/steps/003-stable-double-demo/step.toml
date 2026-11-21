@@ -1,0 +1,8 @@
+number = 3
+slug = "stable-double-demo"
+status = "in-progress"
+description = "Fix the Double 21 demo so it preserves its result across further scheduler ti..."
+role = "production"
+context_files = []
+created_at = "2026-11-21T10:35:29"
+commits = []
