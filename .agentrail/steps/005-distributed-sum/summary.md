@@ -1,0 +1,1 @@
+Implemented and verified Distributed sum across four topologies. Chip-local sums run on emulated F18 nodes. The browser stages transfers along topology links and highlights each operation.
