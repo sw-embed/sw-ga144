@@ -1,11 +1,19 @@
 # sw-ga144
 
+I attended SVFIG Forth Day on November 21, 2026. After listening to
+Charles Moore, the creator of Forth, speak about GreenArrays GA144
+hardware, I vibe-coded this repo to emulate the chip and demo some of
+the concepts.
+
 Write Forth for the GreenArrays GA144 and step it through a simulated
 chip. The assembler is written in X_eTaL, the emulator in Rust, and the
 browser UI in Yew/WebAssembly. The browser demo includes single-node
 calculations and programs that send results across the chip.
 
-[Open the live GA144 Studio demo](https://sw-embed.github.io/sw-ga144/)
+[Open the live GA144 Studio demo](https://sw-embed.github.io/sw-ga144/) |
+[GreenArrays website](https://www.greenarraychips.com/home/)
+
+![GA144 Studio running Double and forward, with 84 in node 002's T register](images/screenshot.png)
 
 ## Build
 
