@@ -1,0 +1,1 @@
+Implemented and verified the typed F18 RAM assembler, single-chip Rust emulator, and standalone Yew browser prototype. X_eTaL-extensions integration remains in step 2.
