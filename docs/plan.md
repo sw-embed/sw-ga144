@@ -7,9 +7,11 @@ registers, RAM, and port waits.
 
 ## Multiple chips
 
-GA144 Studio previews a two-chip point-to-point link, a five-chip ring,
-and an 8-by-8 mesh. Select a chip to inspect its 144 nodes. The preview
-uses one generic package shape and displays the planned topology.
+GA144 Studio shows a two-chip point-to-point link, a five-chip ring,
+and an 8-by-8 mesh. Distributed sum runs the F18 subtotal program on
+each participating chip's node 000, with the browser handing values
+up a spanning tree. The mesh demo uses 62 of the 64 chips. A serial
+transport with signaling and timing is a separate milestone.
 
 1. Connect two simulated GA144s through an explicit chip-to-chip
    transport. Verify a value transfer in each direction.

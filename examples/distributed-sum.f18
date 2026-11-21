@@ -1,0 +1,9 @@
+( Add the local contribution and up to four neighboring subtotals. )
+( The host places the five operands at RAM addresses x20..x24. )
+: entry
+  x20 a!
+  @+ @+ . +
+  @+ . +
+  @+ . +
+  @ . +
+: done done ;

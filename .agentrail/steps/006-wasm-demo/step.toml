@@ -1,4 +1,4 @@
-number = 5
+number = 6
 slug = "wasm-demo"
 status = "pending"
 description = "Evaluate and prototype the optional Yew/Trunk browser demo in X_eTaL-extensio..."

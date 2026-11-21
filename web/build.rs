@@ -15,6 +15,7 @@ fn main() {
         "receive",
         "relay-double",
         "receive-relay",
+        "distributed-sum",
     ] {
         let source = format!("examples/{demo}.f18");
         println!("cargo:rerun-if-changed=../{source}");

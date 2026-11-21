@@ -142,3 +142,20 @@ footer a { color: var(--active); }
   .network-content { grid-template-columns: 1fr; }
   .network-copy { max-width: none; }
 }
+button:disabled { cursor: default; opacity: .48; }
+.sum-callout {
+  margin-top: .8rem; margin-bottom: .65rem; padding: .75rem .85rem;
+  border: 1px solid #856840; border-left: 3px solid var(--waiting);
+  border-radius: .35rem; background: #242920;
+}
+.sum-callout p { margin: 0; line-height: 1.5; }
+.sum-progress, .sum-result { color: #eaf0e4; font-weight: 600; }
+.sum-active { color: var(--waiting); font-family: var(--mono); }
+.network-link.carrying { height: 3px; background: var(--waiting); box-shadow: 0 0 .35rem #efbc6690; }
+.network-link.idle-link, .package.idle-package { opacity: .45; }
+.package.processing, .node.processing {
+  background: #594326; color: #ffda92; border-color: var(--waiting);
+  outline: 2px solid var(--waiting); outline-offset: .18rem;
+}
+.help h3 { margin-bottom: .4rem; }
+.help p + p { margin-top: .55rem; }

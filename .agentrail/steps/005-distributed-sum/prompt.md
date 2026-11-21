@@ -1,0 +1,1 @@
+Add an interactive distributed sum demo across 1, 2, 5, and 62 chips, reusing the F18 emulator for local work and showing staged transfers, active chips and nodes, and step-by-step callouts.

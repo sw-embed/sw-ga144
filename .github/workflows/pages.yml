@@ -48,7 +48,9 @@ jobs:
           printf 'XETAL_BIN=%s\n' "$RUNNER_TEMP/xetal-target/debug/xetal" >> "$GITHUB_ENV"
 
       - name: Verify the assembler and emulator
-        run: tests/gate.sh
+        run: |
+          tests/gate.sh
+          cargo test --locked --manifest-path web/Cargo.toml
 
       - name: Build static site
         working-directory: web

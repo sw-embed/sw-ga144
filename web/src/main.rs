@@ -1,11 +1,14 @@
+use gloo_timers::callback::Interval;
 use sw_ga144::{COLUMNS, Ga144, Image, NodeId, ROWS};
 use web_sys::{HtmlSelectElement, HtmlTextAreaElement};
 use yew::prelude::*;
 
 mod demos;
+mod distributed;
 mod topology;
 
 use demos::{Demo, MULTIPLE_NODES, SINGLE_NODE};
+use distributed::{Distributed, SumCallout, sum_node};
 use topology::{Network, Topology};
 
 struct Program {
@@ -107,13 +110,16 @@ fn app() -> Html {
         let help_open = help_open.clone();
         Callback::from(move |_| help_open.set(!*help_open))
     };
-    let demo = demos::all().nth(*selection).expect("valid demo index");
+    let distributed_option = demos::all().count();
+    let sum_mode = !single || *selection == distributed_option;
+    let demo = demos::all().nth(*selection).unwrap_or(&SINGLE_NODE[0]);
     let single_machine = use_mut_ref(|| Machine::new(&SINGLE_NODE[0]));
-    let preview_machine = use_mut_ref(Machine::empty);
-    let machine = if single {
-        single_machine
+    let distribution = use_mut_ref(|| Distributed::new(Topology::Single));
+    let running = use_state(|| false);
+    let machine = if sum_mode {
+        distribution.borrow().chip(*chip_selection)
     } else {
-        preview_machine.clone()
+        single_machine.clone()
     };
     let redraw = use_state(|| 0);
     let editor = use_node_ref();
@@ -121,35 +127,90 @@ fn app() -> Html {
 
     let select_chip = {
         let chip_selection = chip_selection.clone();
-        let preview_machine = preview_machine.clone();
+        let running = running.clone();
         Callback::from(move |index| {
-            preview_machine.borrow_mut().selected =
-                NodeId::from_number(0).expect("valid first node");
+            running.set(false);
             chip_selection.set(index);
         })
     };
+    let reset_sum = {
+        let chip_selection = chip_selection.clone();
+        let distribution = distribution.clone();
+        let running = running.clone();
+        Callback::from(move |layout| {
+            running.set(false);
+            *distribution.borrow_mut() = Distributed::new(layout);
+            chip_selection.set(0);
+        })
+    };
     let change_demo = {
-        let machine = machine.clone();
         let redraw = redraw.clone();
         let selection = selection.clone();
+        let reset_sum = reset_sum.clone();
         Callback::from(move |event: Event| {
             let select = event.target_unchecked_into::<HtmlSelectElement>();
-            if let Ok(index) = select.value().parse::<usize>()
-                && let Some(demo) = demos::all().nth(index)
-            {
-                *machine.borrow_mut() = Machine::new(demo);
-                selection.set(index);
-                redraw.set(*redraw + 1);
+            let Ok(index) = select.value().parse::<usize>() else {
+                return;
+            };
+            if index == distributed_option {
+                reset_sum.emit(Topology::Single);
+            } else if let Some(demo) = demos::all().nth(index) {
+                *single_machine.borrow_mut() = Machine::new(demo);
+                reset_sum.emit(Topology::Single);
+            } else {
+                return;
             }
+            selection.set(index);
+            redraw.set(*redraw + 1);
         })
     };
     let reset = {
         let machine = machine.clone();
         let redraw = redraw.clone();
+        let reset_sum = reset_sum.clone();
+        let topology = *topology;
         Callback::from(move |_| {
-            *machine.borrow_mut() = Machine::new(demo);
+            if sum_mode {
+                reset_sum.emit(topology);
+            } else {
+                *machine.borrow_mut() = Machine::new(demo);
+                redraw.set(*redraw + 1);
+            }
+        })
+    };
+    let advance_sum = {
+        let running = running.clone();
+        let distribution = distribution.clone();
+        let chip_selection = chip_selection.clone();
+        let redraw = redraw.clone();
+        Callback::from(move |()| {
+            let mut model = distribution.borrow_mut();
+            if let Some(index) = model.step() {
+                chip_selection.set(index);
+            }
+            if model.finished() {
+                running.set(false);
+            }
             redraw.set(*redraw + 1);
         })
+    };
+    {
+        let advance_sum = advance_sum.clone();
+        use_effect_with(*running, move |is_running| {
+            let timer = is_running.then(|| Interval::new(320, move || advance_sum.emit(())));
+            move || drop(timer)
+        });
+    }
+    let step_sum = {
+        let running = running.clone();
+        Callback::from(move |_| {
+            running.set(false);
+            advance_sum.emit(());
+        })
+    };
+    let run_sum = {
+        let running = running.clone();
+        Callback::from(move |_| running.set(!*running))
     };
     let advance = |count| {
         let machine = machine.clone();
@@ -187,6 +248,18 @@ fn app() -> Html {
         })
     };
 
+    let model = distribution.borrow();
+    let operation = model.last.clone();
+    let finished = model.finished();
+    let sum_controls = html! {
+        <>
+            <button onclick={reset.clone()}>{"Reset"}</button>
+            <button onclick={step_sum} disabled={finished}>{"Step"}</button>
+            <button class="primary" onclick={run_sum} disabled={finished}>{if *running { "Pause" } else { "Run demo" }}</button>
+        </>
+    };
+    let callout = html! { <SumCallout step={model.steps} total={model.total_steps()}
+    operation={operation.clone()} error={model.error.clone()}/> };
     let state = machine.borrow();
     let selected = state.selected;
     let registers = state.chip.inspect(selected);
@@ -196,8 +269,9 @@ fn app() -> Html {
         let redraw = redraw.clone();
         let status = state.chip.inspect(id);
         let mode = if status.waiting_address.is_some() { "waiting" } else if status.active { "active" } else { "idle" };
+        let processing = sum_mode && id == sum_node() && operation.as_ref().is_some_and(|current| current.chip == *chip_selection);
         html! {
-            <button type="button" class={classes!("node", mode)} aria-pressed={(id == selected).to_string()}
+            <button type="button" class={classes!("node", mode, processing.then_some("processing"))} aria-pressed={(id == selected).to_string()}
                 title={format!("Node {id} ({mode})")} onclick={Callback::from(move |_| {
                     machine.borrow_mut().selected = id;
                     redraw.set(*redraw + 1);
@@ -222,12 +296,12 @@ fn app() -> Html {
             <nav class="topology-tabs" aria-label="Chip topology">
                 {for Topology::ALL.into_iter().map(|tab| {
                     let topology = topology.clone();
-                    let select_chip = select_chip.clone();
+                    let reset_sum = reset_sum.clone();
                     html! {
                         <button type="button" aria-pressed={(tab == *topology).to_string()}
                             onclick={Callback::from(move |_| {
                                 if *topology != tab {
-                                    select_chip.emit(0);
+                                    reset_sum.emit(tab);
                                     topology.set(tab);
                                 }
                             })}>{tab.title()}</button>
@@ -242,21 +316,24 @@ fn app() -> Html {
                     <li>{"Look at T for the demo result. T is the top of the node’s data stack. The inspector also shows its source, RAM, and other registers."}</li>
                     <li>{"For your own program, run "}<code>{"./assemble program.f18"}</code>{", choose a node, and paste the listing under Load an assembler listing. Use entry address 0 for a program that starts at RAM address 0."}</li>
                 </ol>
-                <p>{"Dual, Ring, and Mesh show planned inter-chip links. Select a chip to use the node inspector. The Single tab runs programs."}</p>
+                <h3>{"Distributed sum"}</h3>
+                <p>{"Pick Distributed sum on Single, or open Dual, Ring, or Mesh to run it across 2, 5, or 62 chips. The mesh keeps Chip 63 and Chip 64 idle."}</p>
+                <p>{"Step processes one chip. Run demo plays the steps in order, and Pause stops playback. The highlighted chip and Node 000 show where the current subtotal was calculated. The callout shows which values were added."}</p>
+                <p>{"Node 000 on each chip runs F18 code. The browser passes the subtotals along the diagram’s links. This transport models who sends to whom and does not model serial timing or signaling."}</p>
                 <p>{"The inspector displays results directly. You can also send values between simulated nodes."}</p>
                 <p>{"This demo is conceptual and based on public documentation. It has not been validated against actual GreenArrays hardware or software."}</p>
             </section>
             {if !single { html! {
-                <Network topology={*topology} selected={*chip_selection} on_select={select_chip}/>
+                <Network topology={*topology} selected={*chip_selection} on_select={select_chip}
+                    operation={operation.clone()} controls={sum_controls.clone()}>{callout.clone()}</Network>
             } } else { Html::default() }}
             <section class="panel">
                 <div class="panel-title">
                     <h2>{if single { "Chip map".into() } else { format!("Chip {:02} node map", *chip_selection + 1) }}</h2>
-                    {if single { html! {
-                        <div class="controls">
+                    {if single { html! { <div class="controls">
                             <div class="demo-picker">
                                 <label for="demo">{"Demo"}</label>
-                                <select id="demo" onchange={change_demo} aria-describedby="demo-description">
+                                <select id="demo" onchange={change_demo} aria-describedby={(!sum_mode).then_some("demo-description")}>
                                     <optgroup label="Single node">
                                         {for SINGLE_NODE.iter().enumerate().map(|(index, demo)|
                                             html! { <option value={index.to_string()} selected={index == *selection}>{demo.title}</option> })}
@@ -267,19 +344,24 @@ fn app() -> Html {
                                             html! { <option value={index.to_string()} selected={index == *selection}>{demo.title}</option> }
                                         })}
                                     </optgroup>
+                                    <option value={distributed_option.to_string()} selected={sum_mode}>{"Distributed sum"}</option>
                                 </select>
                             </div>
-                            <button onclick={reset}>{"Reset"}</button>
-                            <button onclick={advance(1)}>{"Step"}</button>
-                            <button class="primary" onclick={advance(demo.ticks)}>{"Run demo"}</button>
-                        </div>
-                    } } else { Html::default() }}
+                        {if sum_mode { sum_controls.clone() } else { html! {
+                            <>
+                                <button onclick={reset}>{"Reset"}</button>
+                                <button onclick={advance(1)}>{"Step"}</button>
+                                <button class="primary" onclick={advance(demo.ticks)}>{"Run demo"}</button>
+                            </>
+                        } }}
+                    </div> } } else { Html::default() }}
                 </div>
-                {if single { html! { <p id="demo-description">{demo.description}</p> } } else { Html::default() }}
+                {if !sum_mode { html! { <p id="demo-description">{demo.description}</p> } }
+                 else if single { callout } else { Html::default() }}
                 <div class="scroll"><div class="chip">{for node_grid}</div></div>
                 <div class="legend">
                     <span><i class="active"></i>{"Active"}</span><span><i class="waiting"></i>{"Waiting"}</span><span><i class="idle"></i>{"Idle"}</span>
-                    {if single { html! {
+                    {if !sum_mode { html! {
                         <output aria-live="polite">{format!("Tick {} · {}", state.ticks, state.status)}</output>
                     } } else { Html::default() }}
                 </div>
@@ -308,7 +390,7 @@ fn app() -> Html {
                     {if let Some(source) = instructions { html! {<pre>{source}</pre>} }
                       else if program.is_some() { html! {<pre>{listing}</pre>} }
                       else { html! {<p>{"This node has no loaded program."}</p>} }}
-                    {if single { html! {<details key={format!("listing-{selected}")}><summary>{"Load an assembler listing"}</summary>
+                    {if !sum_mode { html! {<details key={format!("listing-{selected}")}><summary>{"Load an assembler listing"}</summary>
                         <label for="listing">{"Decimal address and word pairs"}</label>
                         <textarea id="listing" ref={editor} value={listing.to_owned()} rows="5" spellcheck="false"/>
                         <div class="controls loader">

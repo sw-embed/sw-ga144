@@ -152,6 +152,7 @@ dependencies = [
 name = "ga144-web"
 version = "0.1.0"
 dependencies = [
+ "gloo-timers 0.3.0",
  "sw-ga144",
  "web-sys",
  "yew",

@@ -129,10 +129,20 @@ loads the program and selects the node where the result appears in
 your own Forth, assemble it with `./assemble` and paste the output into
 **Load an assembler listing**.
 
-Use **Single** to run a demo. **Dual**, **Ring**, and **Mesh** preview
-planned high-speed serial links across two chips, a five-chip ring,
-and an 8-by-8 grid. Select a package in the diagram to open that
-chip's 144-node inspector. The links are placeholders.
+### Distributed sum
+
+Pick **Distributed sum** on the **Single** tab or open **Dual**,
+**Ring**, or **Mesh**. The demo sums chip numbers across 1, 2, 5, or
+62 chips, respectively. Chip 63 and Chip 64 stay idle in the 8-by-8
+mesh.
+
+**Step** processes one chip. **Run demo** plays the steps, and
+**Pause** holds the current step. The callout shows the active chip,
+node 000, and the values it adds. The result appears in T on Chip 01.
+Each chip runs the same assembled F18 program to compute its
+subtotal. The browser passes those subtotals along the links of a
+spanning tree. The transport models the path of each value at the
+application level.
 
 For an offline file preview, run `trunk build` and `python3 standalone.py`
 from `web/`. Open the resulting `web/dist/ga144-local.html` in a browser.

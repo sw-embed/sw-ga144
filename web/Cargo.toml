@@ -8,6 +8,7 @@ publish = false
 [workspace]
 
 [dependencies]
+gloo-timers = "0.3"
 sw-ga144 = { path = ".." }
 yew = { version = "0.21", features = ["csr"] }
 web-sys = { version = "0.3", features = ["HtmlTextAreaElement", "HtmlInputElement", "HtmlSelectElement"] }
