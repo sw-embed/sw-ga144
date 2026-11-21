@@ -1,0 +1,1 @@
+Implemented and browser-verified the selectable Dual, Ring, and Mesh topology previews. The branch is local for preview; serial transport and richer Blender-generated assets remain future work.
