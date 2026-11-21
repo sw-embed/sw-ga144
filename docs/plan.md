@@ -13,6 +13,11 @@ each participating chip's node 000, with the browser handing values
 up a spanning tree. The mesh demo uses 62 of the 64 chips. A serial
 transport with signaling and timing is a separate milestone.
 
+The mesh's Fractal zoom demo gives whole frames to four chips in
+staggered jobs. Each chip runs a row kernel on node 000. The browser
+collects the rows and displays completed frames in order. This models
+frame scheduling and readback at the application level.
+
 1. Connect two simulated GA144s through an explicit chip-to-chip
    transport. Verify a value transfer in each direction.
 2. Use the same transport to connect chips in a ring. Verify forwarding

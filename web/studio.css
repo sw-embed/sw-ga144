@@ -159,3 +159,36 @@ button:disabled { cursor: default; opacity: .48; }
 }
 .help h3 { margin-bottom: .4rem; }
 .help p + p { margin-top: .55rem; }
+.fractal-demo { margin-top: .8rem; }
+.fractal-frame { margin: 0 0 .7rem; }
+.fractal-pixels {
+  display: grid; grid-template-columns: repeat(32, 1fr); grid-template-rows: repeat(32, 1fr);
+  aspect-ratio: 1; width: min(100%, 16rem);
+  background: #102027; border: 1px solid var(--line); overflow: hidden;
+}
+.fractal-pixels .inside { background: #7be8c9; }
+.fractal-pixels.empty { display: grid; place-items: center; padding: .6rem; color: var(--muted); }
+.fractal-frame figcaption { margin-top: .3rem; color: var(--muted); font-family: var(--mono); }
+.fractal-progress ul { list-style: none; margin: .5rem 0 0; padding: 0; }
+.fractal-progress li {
+  display: flex; gap: .4rem .65rem; flex-wrap: wrap; padding: .32rem 0;
+  border-top: 1px solid var(--line); font-size: .88rem;
+}
+.fractal-progress li span { color: var(--muted); }
+.package.rendering, .node.rendering {
+  background: #225f52; border-color: var(--active); color: #d3fff3;
+  box-shadow: 0 0 .55rem #7be8c970;
+}
+.package.streaming, .node.streaming {
+  background: #594326; border-color: var(--waiting); color: #ffda92;
+  outline: 2px solid var(--waiting); outline-offset: .18rem;
+}
+.transfer-pulse {
+  position: absolute; top: 50%; left: 0; width: .55rem; height: .55rem;
+  border-radius: 50%; translate: -50% -50%; background: #fff1c1;
+  box-shadow: 0 0 .5rem var(--waiting); animation: transfer-flow .26s ease-out both;
+}
+@keyframes transfer-flow { to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .transfer-pulse { animation: none; left: 65%; }
+}

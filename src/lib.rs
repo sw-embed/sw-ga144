@@ -109,6 +109,9 @@ impl Ga144 {
         let pending = std::array::from_fn(|index| self.nodes[index].request());
         let mut progress = 0;
         for (index, node) in self.nodes.iter_mut().enumerate() {
+            if !node.active || pending[index].is_some() {
+                continue;
+            }
             let status = port_status(self.links[index], &pending);
             progress += usize::from(node.step(status).map_err(|fault| TickError {
                 node: NodeId(index),

@@ -1,4 +1,4 @@
-number = 8
+number = 9
 slug = "ring-and-mesh"
 status = "pending"
 description = "Compose the chip-pair transport into a ring, then a mesh. Validate explicit t..."

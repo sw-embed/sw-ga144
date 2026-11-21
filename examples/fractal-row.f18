@@ -1,0 +1,14 @@
+( Rasterize 32 pixels of a binary Sierpinski fractal. )
+( x18 = first x, x19 = y, x1a = distance between pixels. )
+( A zero x AND y at x20..x3f means the pixel is inside. )
+: entry
+  x18 a! @
+  x20 a!
+  31 for
+    x19 b! dup @b and !+
+    x1a b! @b . +
+  next
+  ahead
+# x17 org
+then
+: done done ;

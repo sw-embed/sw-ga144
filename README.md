@@ -144,6 +144,14 @@ subtotal. The browser passes those subtotals along the links of a
 spanning tree. The transport models the path of each value at the
 application level.
 
+### Fractal zoom
+
+On **Mesh**, select **Fractal zoom**. Four chips compute staggered
+32-by-32 frames of a Sierpinski fractal. Each chip's node 000 runs
+the F18 row program and writes each row to RAM. The browser reads the
+rows, assembles frames, and displays them in zoom order. Green marks
+chips computing frames. Amber marks a completed frame being read back.
+
 For an offline file preview, run `trunk build` and `python3 standalone.py`
 from `web/`. Open the resulting `web/dist/ga144-local.html` in a browser.
 An offline Trunk build also needs the `wasm-bindgen` CLI version pinned

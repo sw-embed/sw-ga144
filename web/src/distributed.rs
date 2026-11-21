@@ -1,18 +1,13 @@
 use std::{cell::RefCell, collections::VecDeque, fmt::Write, rc::Rc};
 
-use sw_ga144::NodeId;
 use yew::prelude::*;
 
-use crate::{Machine, topology::Topology};
+use crate::{Machine, topology::Topology, worker_node};
 
 const SOURCE: &str = include_str!("../../examples/distributed-sum.f18");
 const LISTING: &str = include_str!(concat!(env!("OUT_DIR"), "/distributed-sum.img"));
 const OPERAND_START: usize = 0x20;
 const SUM_TICKS: usize = 32;
-
-pub(crate) fn sum_node() -> NodeId {
-    NodeId::from_number(0).expect("valid sum node")
-}
 
 #[derive(Clone, PartialEq)]
 pub(crate) struct Operation {
@@ -107,7 +102,12 @@ impl Distributed {
     fn add_on_chip(&self, index: usize) -> Result<Operation, String> {
         let incoming: Vec<_> = self.children[index]
             .iter()
-            .map(|&child| (child, self.chips[child].borrow().chip.inspect(sum_node()).t))
+            .map(|&child| {
+                (
+                    child,
+                    self.chips[child].borrow().chip.inspect(worker_node()).t,
+                )
+            })
             .collect();
 
         let mut operands = [0; 5];
@@ -121,12 +121,12 @@ impl Distributed {
         }
 
         let mut chip = self.chips[index].borrow_mut();
-        chip.install(sum_node(), 0, &listing, Some(SOURCE))?;
-        chip.selected = sum_node();
+        chip.install(worker_node(), 0, &listing, Some(SOURCE))?;
+        chip.selected = worker_node();
         for _ in 0..SUM_TICKS {
             chip.chip.tick().map_err(|error| error.to_string())?;
         }
-        let sum = chip.chip.inspect(sum_node()).t;
+        let sum = chip.chip.inspect(worker_node()).t;
         Ok(Operation {
             chip: index,
             incoming,
@@ -197,7 +197,10 @@ mod tests {
             assert_eq!(model.steps, count);
             assert!(model.error.is_none());
             assert_eq!(model.last.as_ref().unwrap().chip, 0);
-            assert_eq!(model.chip(0).borrow().chip.inspect(sum_node()).t, expected);
+            assert_eq!(
+                model.chip(0).borrow().chip.inspect(worker_node()).t,
+                expected
+            );
         }
     }
 }

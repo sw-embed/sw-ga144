@@ -1,0 +1,1 @@
+Add a mesh fractal demo with staggered frame jobs on several emulated GA144 chips. Run the pixel kernel as assembled F18 code and show frame computation, readback and display.
