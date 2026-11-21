@@ -1,8 +1,9 @@
 number = 2
 slug = "github-pages"
-status = "in-progress"
+status = "completed"
 description = "Set up a GitHub Actions workflow to build the standalone Yew demo and publish..."
 role = "production"
 context_files = []
 created_at = "2026-11-21T09:59:21"
-commits = []
+completed_at = "2026-11-21T10:03:35"
+commits = ["a6641301428a61a45f61da6582580e223a653f36"]

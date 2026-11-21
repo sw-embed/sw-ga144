@@ -124,9 +124,14 @@ in `web/Cargo.lock`.
 
 This demo uses Yew and the Rust emulator locally. Integration with the
 X_eTaL-extensions shell and in-browser source assembly are future
-steps. The next emulator milestone is one explicitly wired chip pair
-with a modeled transport. Ring and mesh scenarios can build on that
-connection model.
+steps. See the [development plan](docs/plan.md) for the chip-pair,
+ring, and mesh milestones.
+
+## Future TODOs
+
+- Port the emulator to a development board such as the Arduino UNO Q.
+- Run the GA144 emulator on a GPU.
+- Implement a GA144 simulator on an FPGA, starting with one chip and scaling to a mesh.
 
 ## Verify
 
