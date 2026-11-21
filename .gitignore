@@ -1,0 +1,4 @@
+/target/
+/web/dist/
+/web/target/
+/docs/*.pdf

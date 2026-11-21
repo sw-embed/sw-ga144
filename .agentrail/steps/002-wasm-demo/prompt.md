@@ -1,0 +1,1 @@
+Evaluate and prototype the optional Yew/Trunk browser demo in X_eTaL-extensions. Run the typed assembler with in-memory inputs and expose stepping and node inspection using the headless emulator.

@@ -1,0 +1,8 @@
+number = 4
+slug = "ring-and-mesh"
+status = "pending"
+description = "Compose the chip-pair transport into a ring, then a mesh. Validate explicit t..."
+role = "production"
+context_files = []
+created_at = "2026-11-21T09:37:52"
+commits = []

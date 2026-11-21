@@ -1,0 +1,8 @@
+( Add the numbers 1 through 5. A holds the number to add next. )
+: entry
+  1 a! 0
+  4 for
+    a . +
+    a 1 . + a!
+  next
+: done done ;

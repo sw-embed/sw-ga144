@@ -1,0 +1,1 @@
+Model an explicitly wired pair of GA144 chips and validate transfer through a chosen chip-to-chip transport.

@@ -1,0 +1,1 @@
+Compose the chip-pair transport into a ring, then a mesh. Validate explicit topology and route examples.

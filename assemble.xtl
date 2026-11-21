@@ -1,0 +1,7 @@
+"f:" u_se< "F18.xtl"
+
+u:r_eport := { (image, message) ->
+  (t_ally message) > 0 ? message
+  f:l_isting image
+}
+_ := p_rint! u:r_eport f:a_ssemble []N_GET []R_EAD @

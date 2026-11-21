@@ -1,0 +1,3 @@
+( Node 001 receives from its RIGHT port. Inspect T for 42. )
+: entry x1d5 b! @b
+: done done ;

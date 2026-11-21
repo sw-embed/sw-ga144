@@ -1,0 +1,8 @@
+number = 3
+slug = "chip-pair"
+status = "pending"
+description = "Model an explicitly wired pair of GA144 chips and validate transfer through a..."
+role = "production"
+context_files = []
+created_at = "2026-11-21T09:37:52"
+commits = []

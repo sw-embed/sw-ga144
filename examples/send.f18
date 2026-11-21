@@ -1,0 +1,3 @@
+( Node 000 sends one value to node 001 via the shared RIGHT wire. )
+: entry x1d5 b! 42 !b
+: done done ;

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# != 1 || $1 == *$'\n'* || $1 == *$'\r'* ]]; then
+    printf 'Usage: %s SOURCE.f18\n' "${0##*/}" >&2
+    exit 2
+fi
+
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+xetal="${XETAL_BIN:-}"
+if [[ -z $xetal ]]; then
+    for candidate in "$root/../X_eTaL" "$root/../../softwarewrighter/X_eTaL"; do
+        if [[ -x $candidate/target/release/xetal ]]; then
+            xetal="$candidate/target/release/xetal"
+            break
+        fi
+        if [[ -x $candidate/target/debug/xetal ]]; then
+            xetal="$candidate/target/debug/xetal"
+            break
+        fi
+    done
+fi
+xetal="${xetal:-xetal}"
+if ! command -v "$xetal" >/dev/null; then
+    printf 'X_eTaL executable unavailable. Set XETAL_BIN to its path.\n' >&2
+    exit 2
+fi
+
+listing="$(printf '%s\n' "$1" | "$xetal" run "$root/assemble.xtl")"
+if [[ $listing == 'error: '* ]]; then
+    printf '%s\n' "$listing" >&2
+    exit 1
+fi
+if [[ -n $listing ]]; then
+    printf '%s\n' "$listing"
+fi

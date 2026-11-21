@@ -1,0 +1,5 @@
+( Node 001 doubles the value from 000, then sends it to 002. )
+: entry
+  x1d5 b! @b dup . +
+  x175 b! !b
+: done done ;

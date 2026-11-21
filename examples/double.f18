@@ -1,0 +1,4 @@
+( Two words with a tail call. )
+# 0 org
+: double dup . + ;
+: example 21 double ;

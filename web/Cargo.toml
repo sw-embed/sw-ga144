@@ -1,0 +1,13 @@
+[package]
+name = "ga144-web"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[dependencies]
+sw-ga144 = { path = ".." }
+yew = { version = "0.21", features = ["csr"] }
+web-sys = { version = "0.3", features = ["HtmlTextAreaElement", "HtmlInputElement", "HtmlSelectElement"] }

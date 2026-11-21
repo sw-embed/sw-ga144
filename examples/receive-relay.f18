@@ -1,0 +1,3 @@
+( Node 002 receives node 001's result through their shared LEFT port. )
+: entry x175 b! @b
+: done done ;

@@ -1,0 +1,1 @@
+Implement and validate the typed X_eTaL F18 RAM assembler and a first headless Rust GA144 emulator. Run assembled code through the emulator. Keep the X_eTaL checkout as a read-only dependency.

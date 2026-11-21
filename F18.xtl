@@ -1,0 +1,244 @@
+## F18A RAM cross-assembler. Addresses are zero-origin.
+## Machine state: (image, instruction-word address, next slot, raw word).
+## Slot zero indicates there is no partially filled instruction word.
+
+l:opcodeText := "; ex jump call unext next if -if @p @+ @b @ !p !+ !b ! +* 2* 2/ inv + and xor drop dup r> over a . >r b! a!"
+l:opcodes := (l:opcodeText != f_irst " ") p_artition l:opcodeText
+l:places := 8192 256 8 1
+l:bits := 18 r_eshape 2
+l:wordLimit := 262144
+l:emptyImage := 0 t_ake 0
+
+l:e_ncode := { raw ->
+  2 d_ecode ((l:bits e_ncode raw) != (l:bits e_ncode 87381))
+}
+
+l:w_rite := { (mem, address) value ->
+  (address t_ake mem) c_at value c_at (address + 1) d_rop mem
+}
+
+l:e_mit := { (mem, iw, slot, raw) op ->
+  pos := { @ -> slot = 0 ? t_ally mem; iw } @
+  updated := raw + ((op * (slot + 1) s_elect l:places) d_iv (1 + 3 * (slot = 3)))
+  image := (mem, pos) l:w_rite l:e_ncode updated
+  following := (slot + 1) m_od 4
+  (image, pos, following, updated * (following != 0))
+}
+
+l:p_ad := { (mem, iw, slot, raw) ->
+  slot = 0 ? (mem, iw, slot, raw)
+  l:p_ad (mem, iw, slot, raw) l:e_mit 28
+}
+
+l:o_p := { (mem, iw, slot, raw) op ->
+  state := (mem, iw, slot, raw)
+  (slot = 3) & (0 != op m_od 4) ? (l:p_ad state) l:e_mit op
+  state l:e_mit op
+}
+
+l:d_ata := { (mem, iw, slot, raw) value ->
+  (mem c_at value, iw, slot, raw)
+}
+
+## A transfer terminates the instruction word. The destination field
+## is inserted after instruction encoding (DB001 section 2.4.4).
+l:t_ransfer := { state (op, target) ->
+  (mem, iw, slot, raw) := state
+  pc := t_ally mem
+  place := (slot + 1) s_elect l:places
+  modulus := (slot + 1) s_elect 1024 256 8 1
+  used := slot t_ake l:places
+  fetched := ((raw d_iv used) m_od 32) m_ember? 8 12
+  effectiveP := (iw + 1 + '+ r_/ fetched) m_od 128
+  fits := (target < 256) & ((target d_iv modulus) = (effectiveP d_iv modulus))
+  ((slot = 3) | ((slot != 0) & (n_ot fits))) ? (l:p_ad state) l:t_ransfer (op, target)
+  pos := { @ -> slot = 0 ? pc; iw } @
+  encoded := l:e_ncode (raw + op * place)
+  word := (modulus * (encoded d_iv modulus)) + (target m_od modulus)
+  ((mem, pos) l:w_rite word, pos, 0, 0)
+}
+
+## Unresolved control transfers reserve slot zero, so patching never
+## changes layout. Markers hold the branch address plus one.
+l:f_orward := { state op ->
+  (mem, iw, slot, raw) := l:p_ad state
+  marker := 1 + t_ally mem
+  ((mem, iw, slot, raw) l:t_ransfer (op, 0), marker)
+}
+
+l:p_atch := { state marker ->
+  (mem, iw, slot, raw) := l:p_ad state
+  original := marker s_elect mem
+  word := (1024 * original d_iv 1024) + t_ally mem
+  ((mem, marker - 1) l:w_rite word, iw, slot, raw)
+}
+
+## Read a signed decimal or x/0x-prefixed hexadecimal 18-bit cell.
+## The sentinel is outside the valid input range.
+l:n_umber := { token ->
+  size := t_ally token
+  size = 0 ? l:wordLimit
+  negative := "-" m_atch 1 t_ake token
+  text := negative d_rop token
+  (t_ally text) = 0 ? l:wordLimit
+  prefix := { @ ->
+    "x" m_atch 1 t_ake text ? 1
+    "0x" m_atch 2 t_ake text ? 2
+    0
+  } @
+  digits := prefix d_rop text
+  base := { @ -> prefix = 0 ? 10; 16 } @
+  (t_ally digits) = 0 ? l:wordLimit
+  ((t_ally digits) > 6) ? l:wordLimit
+  alphabet := []D c_at "abcdefABCDEF"
+  loc := alphabet i_ndexOf digits
+  values := (loc - 1) - 6 * (loc > 16)
+  ('m_ax r_/ values) >= base ? l:wordLimit
+  value := base d_ecode values
+  value >= l:wordLimit ? l:wordLimit
+  (1 - 2 * negative) * value
+}
+
+l:l_isting := { image ->
+  addresses := w_here image >= 0
+  0 = t_ally addresses ? ""
+  lines := '{ i ->
+    e_nclose (f_ormat i - 1) c_at " " c_at f_ormat i s_elect image
+  } e_ach addresses
+  d_isclose '{ a b -> e_nclose (d_isclose a) c_at ([]U_CHAR 10) c_at d_isclose b } r_/ lines
+}
+
+l:directives := "# : .. then else ahead leap begin for again until -until while -while repeat org ,"
+l:reserved := l:opcodes c_at (l:directives != f_irst " ") p_artition l:directives
+
+l:controlText := "then else begin for next unext repeat again until -until while -while if -if ahead leap"
+l:controls := (l:controlText != f_irst " ") p_artition l:controlText
+
+l:c_ontrol := { (machine, control) (token, opcode) ->
+  (mem, iw, slot, raw) := machine
+  pc := t_ally mem
+  top := f_irst control c_at 0
+  below := { @ -> (t_ally control) < 2 ? 0; 2 s_elect control } @
+  branchOpen := (top > 0) & (top <= 64)
+  restControl := 1 d_rop control
+
+  token m_atch "then" ? { @ ->
+    n_ot branchOpen ? (machine, control, "error: then needs a forward branch")
+    pc >= 64 ? (machine, control, "error: branch target lies outside RAM")
+    (machine l:p_atch top, restControl, "")
+  } @
+  token m_atch "else" ? { @ ->
+    n_ot branchOpen ? (machine, control, "error: else needs a forward branch")
+    pc >= 63 ? (machine, control, "error: else target lies outside RAM")
+    (code, marker) := machine l:f_orward 2
+    (code l:p_atch top, marker c_at restControl, "")
+  } @
+  (token m_atch "begin") | (token m_atch "for") ? { @ ->
+    counted := token m_atch "for"
+    code := { @ -> counted ? l:p_ad machine l:o_p 29; l:p_ad machine } @
+    (words, address, slots, packed) := code
+    start := t_ally words
+    start >= 64 ? (machine, control, "error: loop entry lies outside RAM")
+    marker := { @ -> counted ? 65 + start; n_eg 1 + start } @
+    (code, marker c_at control, "")
+  } @
+  (token m_atch "next") | (token m_atch "unext") ? { @ ->
+    top < 65 ? (machine, control, "error: next or unext needs for")
+    target := top - 65
+    token m_atch "next" ? (machine l:t_ransfer (5, target), restControl, "")
+    ((slot = 0) | (iw != target)) & (pc != target) ? (machine, control, "error: unext must fit within the first loop instruction word")
+    (machine l:o_p 4, restControl, "")
+  } @
+  token m_atch "repeat" ? { @ ->
+    (top >= 0) | ((below <= 0) | (below > 64)) ? (machine, control, "error: repeat needs begin and while")
+    code := machine l:t_ransfer (2, (n_eg top) - 1)
+    (words, address, slots, packed) := code
+    (t_ally words) >= 64 ? (machine, control, "error: repeat exit lies outside RAM")
+    (code l:p_atch below, 2 d_rop control, "")
+  } @
+  (token m_atch "again") | ((token m_atch "until") | (token m_atch "-until")) ? { @ ->
+    top >= 0 ? (machine, control, "error: again or until needs begin")
+    op := { @ -> token m_atch "again" ? 2; token m_atch "until" ? 6; 7 } @
+    (machine l:t_ransfer (op, (n_eg top) - 1), restControl, "")
+  } @
+  (token m_atch "while") | (token m_atch "-while") ? { @ ->
+    top >= 0 ? (machine, control, "error: while needs begin")
+    (code, marker) := machine l:f_orward (6 + (token m_atch "-while"))
+    (code, top c_at marker c_at restControl, "")
+  } @
+  op := { @ -> opcode < 32 ? opcode; token m_atch "ahead" ? 2; 3 } @
+  (code, marker) := machine l:f_orward op
+  (code, marker c_at control, "")
+}
+
+## Compiler state consists of the machine state, dictionary and a
+## control stack. Negative markers denote BEGIN, 65 and above FOR.
+l:c_ompile := { (machine, names, labels, control) tokens ->
+  (mem, iw, slot, raw) := machine
+  pc := t_ally mem
+  count := t_ally tokens
+  pc > 64 ? (mem, "error: image exceeds 64 RAM words")
+  count = 0 ? (mem, { @ -> (t_ally control) = 0 ? ""; "error: unclosed control structure" } @)
+  token := d_isclose 1 s_elect tokens
+  rest := 1 d_rop tokens
+  next := { @ -> count < 2 ? ""; d_isclose 1 s_elect rest } @
+
+  boxed := e_nclose token
+  opcode := (l:opcodes i_ndexOf boxed) - 1
+  nameIndex := names i_ndexOf boxed
+  number := l:n_umber token
+
+  token m_atch ":" ? { @ ->
+    count < 2 ? (mem, "error: missing label after :")
+    key := e_nclose next
+    (key m_ember? names c_at l:reserved) | ((l:n_umber next) != l:wordLimit) ? (mem, "error: invalid or duplicate label " c_at next)
+    pc >= 64 ? (mem, "error: label lies outside RAM")
+    (l:p_ad machine, names c_at key, labels c_at pc, control) l:c_ompile 1 d_rop rest
+  } @
+  token m_atch "#" ? { @ ->
+    count < 3 ? (mem, "error: expected # value followed by org, comma, jump or call")
+    directive := d_isclose 2 s_elect rest
+    idx := names i_ndexOf e_nclose next
+    value := { @ -> idx <= t_ally names ? idx s_elect labels; l:n_umber next } @
+    value = l:wordLimit ? (mem, "error: invalid host value " c_at next)
+    directive m_atch "," ? (machine l:d_ata (value m_od l:wordLimit), names, labels, control) l:c_ompile 2 d_rop rest
+    (directive m_atch "jump") | (directive m_atch "call") ? { @ ->
+      (value < 0) | (value >= 1024) ? (mem, "error: transfer address must be 0..1023")
+      op := 2 + (directive m_atch "call")
+      (machine l:t_ransfer (op, value), names, labels, control) l:c_ompile 2 d_rop rest
+    } @
+    n_ot directive m_atch "org" ? (mem, "error: expected org, comma, jump or call after # value")
+    ((value < pc) | (value >= 64)) ? (mem, "error: org must advance to a RAM address (0..63)")
+    (((l:p_ad machine) l:d_ata ((value - pc) r_eshape -1)), names, labels, control) l:c_ompile 2 d_rop rest
+  } @
+  token m_atch ".." ? (l:p_ad machine, names, labels, control) l:c_ompile rest
+  boxed m_ember? l:controls ? { @ ->
+    (code, markers, message) := (machine, control) l:c_ontrol (token, opcode)
+    (t_ally message) > 0 ? (mem, message)
+    (code, names, labels, markers) l:c_ompile rest
+  } @
+  opcode m_ember? 0 1 ? { @ ->
+    (words, address, slots, packed) := machine l:o_p opcode
+    ((words, address, 0, 0), names, labels, control) l:c_ompile rest
+  } @
+  (opcode < 32) & (n_ot opcode m_ember? 2 3) ? (machine l:o_p opcode, names, labels, control) l:c_ompile rest
+  nameIndex <= t_ally names ? { @ ->
+    tail := next m_atch ";"
+    target := nameIndex s_elect labels
+    (machine l:t_ransfer (3 - tail, target), names, labels, control) l:c_ompile tail d_rop rest
+  } @
+  number != l:wordLimit ? ((machine l:o_p 8) l:d_ata (number m_od l:wordLimit), names, labels, control) l:c_ompile rest
+  (mem, "error: unknown word " c_at token)
+}
+
+l:a_ssemble := { source ->
+  ascii := []U_CS source
+  opens := ascii = 40
+  closes := ascii = 41
+  depth := '+ s_\ opens - closes
+  ('| r_/ (depth < 0)) | (0 != '+ r_/ (opens - closes)) ? (l:emptyImage, "error: unbalanced parenthesis comment")
+  live := (depth = 0) & (n_ot closes | ascii m_ember? 9 10 11 12 13 32)
+  tokens := live p_artition source
+  blankNames := 0 t_ake e_nclose ""
+  ((l:emptyImage, 0, 0, 0), blankNames, l:emptyImage, l:emptyImage) l:c_ompile tokens
+}
