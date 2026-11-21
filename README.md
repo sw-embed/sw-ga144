@@ -13,7 +13,7 @@ calculations and programs that send results across the chip.
 [Open the live GA144 Studio demo](https://sw-embed.github.io/sw-ga144/) |
 [GreenArrays website](https://www.greenarraychips.com/home/)
 
-![GA144 Studio running Double and forward, with 84 in node 002's T register](images/screenshot.png)
+![GA144 Studio running Fractal zoom on the mesh, with one chip reading back a frame while three compute](images/screenshot.png)
 
 This demo is conceptual and based on public documentation. It has not
 been validated against actual GreenArrays hardware or software.
