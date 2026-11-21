@@ -10,6 +10,7 @@ Categories include `feat` for new capabilities, `fix` for bug fixes,
 
 ## 2026-11-21
 
+- 12:02 `feat` `2c6a5f6` Added a mesh fractal demo that renders whole frames with F18 code on staggered chips and displays them in order. Distributed sum now shows directional pulses on the wires carrying each subtotal.
 - 11:27 `feat` `9932ee2` Added Distributed sum across 1, 2, 5, or 62 chips. Each subtotal runs on an emulated F18 node, with playback, active-chip and node highlights, and callouts for the values added.
 - 11:22 `feat` `cde4af1` Added Single, Dual, Ring, and Mesh tabs to GA144 Studio. The previews show selectable chips and conceptual serial links, and open the existing 144-node inspector for the selected chip.
 - 10:36 `chore` `3550db1` Recorded completion of the Double 21 fix and its regression checks in AgentRail.
