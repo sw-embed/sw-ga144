@@ -1,0 +1,1 @@
+Add Single, Dual, Ring, and Mesh views to GA144 Studio. Show conceptual connections and reuse the 144-node inspector when a chip is selected. Keep inter-chip transport in its later steps.

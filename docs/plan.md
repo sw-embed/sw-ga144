@@ -7,11 +7,20 @@ registers, RAM, and port waits.
 
 ## Multiple chips
 
+GA144 Studio previews a two-chip point-to-point link, a five-chip ring,
+and an 8-by-8 mesh. Select a chip to inspect its 144 nodes. The preview
+uses one generic package shape and displays the planned topology.
+
 1. Connect two simulated GA144s through an explicit chip-to-chip
    transport. Verify a value transfer in each direction.
 2. Use the same transport to connect chips in a ring. Verify forwarding
    around the ring.
 3. Connect chips in a mesh and verify routes that cross several chips.
+
+For richer 3D previews, evaluate generating an unmarked chip model
+with the X_eTaL-extensions Blender extension and selecting instances
+with the browser's Three.js extension. Use the same chip identifiers
+for selection and the node inspector.
 
 ## Future TODOs
 

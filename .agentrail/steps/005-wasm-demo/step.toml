@@ -1,7 +1,7 @@
 number = 5
-slug = "chip-pair"
+slug = "wasm-demo"
 status = "pending"
-description = "Model an explicitly wired pair of GA144 chips and validate transfer through a..."
+description = "Evaluate and prototype the optional Yew/Trunk browser demo in X_eTaL-extensio..."
 role = "production"
 context_files = []
 created_at = "2026-11-21T09:37:52"

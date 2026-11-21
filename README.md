@@ -129,6 +129,11 @@ loads the program and selects the node where the result appears in
 your own Forth, assemble it with `./assemble` and paste the output into
 **Load an assembler listing**.
 
+Use **Single** to run a demo. **Dual**, **Ring**, and **Mesh** preview
+planned high-speed serial links across two chips, a five-chip ring,
+and an 8-by-8 grid. Select a package in the diagram to open that
+chip's 144-node inspector. The links are placeholders.
+
 For an offline file preview, run `trunk build` and `python3 standalone.py`
 from `web/`. Open the resulting `web/dist/ga144-local.html` in a browser.
 An offline Trunk build also needs the `wasm-bindgen` CLI version pinned

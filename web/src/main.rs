@@ -3,7 +3,10 @@ use web_sys::{HtmlSelectElement, HtmlTextAreaElement};
 use yew::prelude::*;
 
 mod demos;
+mod topology;
+
 use demos::{Demo, MULTIPLE_NODES, SINGLE_NODE};
+use topology::{Network, Topology};
 
 struct Program {
     entry: u16,
@@ -20,14 +23,19 @@ struct Machine {
 }
 
 impl Machine {
-    fn new(demo: &Demo) -> Self {
-        let mut machine = Self {
+    fn empty() -> Self {
+        Self {
             chip: Ga144::new(),
             ticks: 0,
             status: "Ready".into(),
-            selected: NodeId::from_number(demo.result_node).expect("valid demo result node"),
+            selected: NodeId::from_number(0).expect("valid first node"),
             programs: Vec::new(),
-        };
+        }
+    }
+
+    fn new(demo: &Demo) -> Self {
+        let mut machine = Self::empty();
+        machine.selected = NodeId::from_number(demo.result_node).expect("valid demo result node");
         for program in demo.programs {
             let node = NodeId::from_number(program.node).expect("valid demo node");
             machine
@@ -91,17 +99,35 @@ impl Machine {
 #[function_component(App)]
 fn app() -> Html {
     let selection = use_state(|| 0);
+    let topology = use_state(|| Topology::Single);
+    let chip_selection = use_state(|| 0);
+    let single = *topology == Topology::Single;
     let help_open = use_state(|| false);
     let toggle_help = {
         let help_open = help_open.clone();
         Callback::from(move |_| help_open.set(!*help_open))
     };
     let demo = demos::all().nth(*selection).expect("valid demo index");
-    let machine = use_mut_ref(|| Machine::new(&SINGLE_NODE[0]));
+    let single_machine = use_mut_ref(|| Machine::new(&SINGLE_NODE[0]));
+    let preview_machine = use_mut_ref(Machine::empty);
+    let machine = if single {
+        single_machine
+    } else {
+        preview_machine.clone()
+    };
     let redraw = use_state(|| 0);
     let editor = use_node_ref();
     let entry_field = use_node_ref();
 
+    let select_chip = {
+        let chip_selection = chip_selection.clone();
+        let preview_machine = preview_machine.clone();
+        Callback::from(move |index| {
+            preview_machine.borrow_mut().selected =
+                NodeId::from_number(0).expect("valid first node");
+            chip_selection.set(index);
+        })
+    };
     let change_demo = {
         let machine = machine.clone();
         let redraw = redraw.clone();
@@ -190,24 +216,24 @@ fn app() -> Html {
             <header>
                 <div><h1>{"GA144 Studio"}</h1><p>{"Step arrayForth through a simulated 144-node chip."}</p></div>
                 <div class="header-actions">
-                <div class="demo-picker">
-                    <label for="demo">{"Demo"}</label>
-                    <select id="demo" onchange={change_demo} aria-describedby="demo-description">
-                        <optgroup label="Single node">
-                            {for SINGLE_NODE.iter().enumerate().map(|(index, demo)|
-                                html! { <option value={index.to_string()} selected={index == *selection}>{demo.title}</option> })}
-                        </optgroup>
-                        <optgroup label="Multiple nodes">
-                            {for MULTIPLE_NODES.iter().enumerate().map(|(index, demo)| {
-                                let index = index + SINGLE_NODE.len();
-                                html! { <option value={index.to_string()} selected={index == *selection}>{demo.title}</option> }
-                            })}
-                        </optgroup>
-                    </select>
-                </div>
-                <button type="button" aria-expanded={help_open.to_string()} aria-controls="demo-help" onclick={toggle_help}>{"Help"}</button>
+                    <button type="button" aria-expanded={help_open.to_string()} aria-controls="demo-help" onclick={toggle_help}>{"Help"}</button>
                 </div>
             </header>
+            <nav class="topology-tabs" aria-label="Chip topology">
+                {for Topology::ALL.into_iter().map(|tab| {
+                    let topology = topology.clone();
+                    let select_chip = select_chip.clone();
+                    html! {
+                        <button type="button" aria-pressed={(tab == *topology).to_string()}
+                            onclick={Callback::from(move |_| {
+                                if *topology != tab {
+                                    select_chip.emit(0);
+                                    topology.set(tab);
+                                }
+                            })}>{tab.title()}</button>
+                    }
+                })}
+            </nav>
             <section id="demo-help" class="panel help" hidden={!*help_open} aria-labelledby="help-heading">
                 <h2 id="help-heading">{"How to use GA144 Studio"}</h2>
                 <ol>
@@ -216,23 +242,46 @@ fn app() -> Html {
                     <li>{"Look at T for the demo result. T is the top of the node’s data stack. The inspector also shows its source, RAM, and other registers."}</li>
                     <li>{"For your own program, run "}<code>{"./assemble program.f18"}</code>{", choose a node, and paste the listing under Load an assembler listing. Use entry address 0 for a program that starts at RAM address 0."}</li>
                 </ol>
+                <p>{"Dual, Ring, and Mesh show planned inter-chip links. Select a chip to use the node inspector. The Single tab runs programs."}</p>
                 <p>{"The inspector displays results directly. You can also send values between simulated nodes."}</p>
                 <p>{"This demo is conceptual and based on public documentation. It has not been validated against actual GreenArrays hardware or software."}</p>
             </section>
+            {if !single { html! {
+                <Network topology={*topology} selected={*chip_selection} on_select={select_chip}/>
+            } } else { Html::default() }}
             <section class="panel">
                 <div class="panel-title">
-                    <h2>{"Chip map"}</h2>
-                    <div class="controls">
-                        <button onclick={reset}>{"Reset"}</button>
-                        <button onclick={advance(1)}>{"Step"}</button>
-                        <button class="primary" onclick={advance(demo.ticks)}>{"Run demo"}</button>
-                    </div>
+                    <h2>{if single { "Chip map".into() } else { format!("Chip {:02} node map", *chip_selection + 1) }}</h2>
+                    {if single { html! {
+                        <div class="controls">
+                            <div class="demo-picker">
+                                <label for="demo">{"Demo"}</label>
+                                <select id="demo" onchange={change_demo} aria-describedby="demo-description">
+                                    <optgroup label="Single node">
+                                        {for SINGLE_NODE.iter().enumerate().map(|(index, demo)|
+                                            html! { <option value={index.to_string()} selected={index == *selection}>{demo.title}</option> })}
+                                    </optgroup>
+                                    <optgroup label="Multiple nodes">
+                                        {for MULTIPLE_NODES.iter().enumerate().map(|(index, demo)| {
+                                            let index = index + SINGLE_NODE.len();
+                                            html! { <option value={index.to_string()} selected={index == *selection}>{demo.title}</option> }
+                                        })}
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <button onclick={reset}>{"Reset"}</button>
+                            <button onclick={advance(1)}>{"Step"}</button>
+                            <button class="primary" onclick={advance(demo.ticks)}>{"Run demo"}</button>
+                        </div>
+                    } } else { Html::default() }}
                 </div>
-                <p id="demo-description">{demo.description}</p>
+                {if single { html! { <p id="demo-description">{demo.description}</p> } } else { Html::default() }}
                 <div class="scroll"><div class="chip">{for node_grid}</div></div>
                 <div class="legend">
                     <span><i class="active"></i>{"Active"}</span><span><i class="waiting"></i>{"Waiting"}</span><span><i class="idle"></i>{"Idle"}</span>
-                    <output aria-live="polite">{format!("Tick {} · {}", state.ticks, state.status)}</output>
+                    {if single { html! {
+                        <output aria-live="polite">{format!("Tick {} · {}", state.ticks, state.status)}</output>
+                    } } else { Html::default() }}
                 </div>
             </section>
             <div class="lower">
@@ -252,12 +301,14 @@ fn app() -> Html {
                 </section>
                 <section class="panel">
                     <div class="panel-title"><h2>{"Program"}</h2>
-                        <span class="detail">{if instructions.is_some() { "F18 source" } else { "Assembler listing" }}</span>
+                        {if program.is_some() {
+                            html! {<span class="detail">{if instructions.is_some() { "F18 source" } else { "Assembler listing" }}</span>}
+                        } else { Html::default() }}
                     </div>
                     {if let Some(source) = instructions { html! {<pre>{source}</pre>} }
                       else if program.is_some() { html! {<pre>{listing}</pre>} }
                       else { html! {<p>{"This node has no loaded program."}</p>} }}
-                    <details key={format!("listing-{selected}")}><summary>{"Load an assembler listing"}</summary>
+                    {if single { html! {<details key={format!("listing-{selected}")}><summary>{"Load an assembler listing"}</summary>
                         <label for="listing">{"Decimal address and word pairs"}</label>
                         <textarea id="listing" ref={editor} value={listing.to_owned()} rows="5" spellcheck="false"/>
                         <div class="controls loader">
@@ -265,7 +316,7 @@ fn app() -> Html {
                             <input id="entry" type="number" min="0" max="1023" ref={entry_field} value={entry.to_string()}/>
                             <button onclick={load}>{format!("Load node {selected}")}</button>
                         </div>
-                    </details>
+                    </details>} } else { Html::default() }}
                 </section>
             </div>
             <footer>
